@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace LangLearn\App\Http\Controllers;
 
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\ParameterType;
 use Exception;
 use LangLearn\App\Http\Routing\RouteAttribute;
 use LangLearn\AppFactory;
 use LangLearn\Support\Helpers\Index;
+use Doctrine\DBAL\Exception as DBALException;
 
 class Authentication
 {
     #[RouteAttribute('/v1/api/login', 'POST')]
-    public function login(): string
+    public function login(): array
     {
         // Here you would typically handle the login logic, such as validating credentials.
         if (!Index::isNotEmptyValInArray(AppFactory::getRequest()->getBody(), ['email', 'password'])) {
@@ -47,23 +49,26 @@ class Authentication
             $remember_me = false; // Default to false if not set
         }
 
-        return json_encode([
+        return [
             "status" => "success",
             "message" => "Logged In Successfully",
             "jwt" => Index::generateJwt(["email" => $user], $_ENV["JWT_SECRET"], ((bool) $remember_me) ? (3600 * 24 * 14) : (3600 * 12))
-        ]);
+        ];
     }
 
     #[RouteAttribute('/api/logout', 'POST')]
-    public function logout(): string
+    public function logout(): array
     {
         // Here you would typically handle the logout logic, such as clearing session data.
         // For now, we return a simple message.
-        return "Logout endpoint reached";
+        return [
+            "status" => "success",
+            "message" => "Logout endpoint reached"
+        ];
     }
 
     #[RouteAttribute('/v1/api/register', 'POST')]
-    public function register(): string
+    public function register(): array
     {
         if (!Index::isNotEmptyValInArray(AppFactory::getRequest()->getBody(), ['email', 'password', 'username', 'full_name', 'preferred_language', 'proficiency_level', 'agree_to_terms'])) {
             throw new Exception("Missing required fields: email, password, username, full_name, preferred_language, proficiency_level, or agree_to_terms");
@@ -82,42 +87,61 @@ class Authentication
 
         if (!((bool) $agree_to_terms)) throw new Exception("You must agree to the terms and conditions");
 
-        $qry = AppFactory::getDBConection()->prepare("
-            INSERT INTO users (
-                email, 
-                password, 
-                username, 
-                full_name, 
-                preferred_language, 
-                proficiency_level, 
-                agree_to_terms
-            ) 
-            VALUES (
-                :email, 
-                :password, 
-                :username, 
-                :full_name, 
-                :preferred_language, 
-                :proficiency_level,
-                :agree_to_terms
-            )
-        ");
+        try {
+            $qry = AppFactory::getDBConection()->prepare("
+                INSERT INTO users (
+                    email, 
+                    password, 
+                    username, 
+                    full_name, 
+                    preferred_language, 
+                    proficiency_level, 
+                    agree_to_terms
+                ) 
+                VALUES (
+                    :email, 
+                    :password, 
+                    :username, 
+                    :full_name, 
+                    :preferred_language, 
+                    :proficiency_level,
+                    :agree_to_terms
+                )
+            ");
 
-        $qry->bindValue(":email", $email, ParameterType::STRING);
-        $qry->bindValue(":password", password_hash($password, PASSWORD_DEFAULT), ParameterType::STRING); // In a real application, hash the password before storing it
-        $qry->bindValue(":username", $username, ParameterType::STRING);
-        $qry->bindValue(":full_name", $full_name, ParameterType::STRING);
-        $qry->bindValue(":preferred_language", strtoupper($preferred_language), ParameterType::STRING);
-        $qry->bindValue(":proficiency_level", strtoupper($proficiency_level), ParameterType::STRING);
-        $qry->bindValue(":agree_to_terms", $agree_to_terms, ParameterType::BOOLEAN);
+            $qry->bindValue(":email", $email, ParameterType::STRING);
+            $qry->bindValue(":password", password_hash($password, PASSWORD_DEFAULT), ParameterType::STRING);
+            $qry->bindValue(":username", $username, ParameterType::STRING);
+            $qry->bindValue(":full_name", $full_name, ParameterType::STRING);
+            $qry->bindValue(":preferred_language", strtoupper($preferred_language), ParameterType::STRING);
+            $qry->bindValue(":proficiency_level", strtoupper($proficiency_level), ParameterType::STRING);
+            $qry->bindValue(":agree_to_terms", $agree_to_terms, ParameterType::BOOLEAN);
 
-        $result = $qry->executeStatement();
+            $result = $qry->executeStatement();
 
-        if (gettype($result) != "integer" || $result <= 0) throw new Exception("User not created successfully"); // For debugging purposes, remove in production
+            if ($result <= 0) {
+                throw new \RuntimeException("User not created successfully");
+            }
 
-        return json_encode([
-            "status" => "success",
-            "message" => "Registration endpoint reached",
-        ]);
+            return [
+                "status" => "success",
+                "message" => "User registered successfully",
+            ];
+
+        } catch (UniqueConstraintViolationException $e) {
+            // This one triggers for duplicate email, username, etc.
+            return [
+                "status" => "error",
+                "message" => "Email or username already exists.",
+                "code" => 409,
+            ];
+
+        } catch (DBALException $e) {
+            // Generic Doctrine DBAL errors (SQL syntax, connection, etc.)
+            return [
+                "status" => "error",
+                "message" => "Database error: " . $e->getMessage(),
+            ];
+        }
     }
 }

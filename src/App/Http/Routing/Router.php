@@ -36,7 +36,7 @@ class Router
         return $this->register("POST", $route, $action);
     }
 
-    public function resolve(string $method, string $route): string
+    public function resolve(string $method, string $route): array|string
     {
         $method = strtoupper($method);
 
@@ -47,7 +47,7 @@ class Router
         $action = $this->entries[$method][$route];
 
         if (is_callable($action)) {
-            return (string) call_user_func_array($action, []);
+            return call_user_func_array($action, []);
         }
 
         $class = isset($action[0]) ? $action[0] : throw new Exception("No class name");
@@ -61,7 +61,7 @@ class Router
 
     public function registerAttributeRoute(string $controller): self
     {
-        $reflection = new \ReflectionClass($controller);
+        $reflection = new ReflectionClass($controller);
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
 
         foreach ($methods as $method) {

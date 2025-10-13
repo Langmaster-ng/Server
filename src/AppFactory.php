@@ -92,7 +92,7 @@ class AppFactory
                 "http://localhost:3000",
                 "http://127.0.0.1:5500"
             ]))->handle(function() {
-                echo (new BodyParser(static::$request))
+                return (new BodyParser(static::$request))
                     ->handle(fn () => $this->router->resolve($_SERVER["REQUEST_METHOD"], $_SERVER["REQUEST_URI"]));
             });
 
@@ -134,11 +134,11 @@ class AppFactory
             ->router
             ->get("/", fn() => "Hello world")
             ->post("/health", function(){
-                return json_encode([
+                return [
                     "status" => "success",
                     "time" => (new DateTime())->format("Y-m-d H:i:s"),
                     "body" => static::$request->getBody()
-                ], JSON_PRETTY_PRINT);
+                ];
         })
 
             // -------------------------------------- CONTROLLER ROUTES ------------------------------------------------------

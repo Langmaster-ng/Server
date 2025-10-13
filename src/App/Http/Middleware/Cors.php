@@ -40,9 +40,18 @@ final class Cors implements Middleware
             header('Vary: Origin');
             header('Access-Control-Allow-Credentials: true');
             header('Content-Type: application/json');
-            http_response_code(200);
+            if (isset($next)) {
+                $temp_resp = $next();
+                if (gettype($temp_resp) === "array" && $temp_resp["status"] === "error") {
+                    http_response_code($temp_resp["code"] ?? 400);
+                } else {
+                    http_response_code(200);
+                };
 
-            return isset($next) ? $next() : '';
+                return json_encode($temp_resp);
+            }
+
+            return '';
         }
 
         http_response_code(403);
