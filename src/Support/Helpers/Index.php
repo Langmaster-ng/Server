@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace LangLearn\Helpers;
+namespace LangLearn\Support\Helpers;
 
 use Exception;
 use Firebase\JWT\JWT;

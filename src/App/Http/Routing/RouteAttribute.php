@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace LangLearn\AttributeClasses;
+namespace LangLearn\App\Http\Routing;
 
 use Attribute;
 

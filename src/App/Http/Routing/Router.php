@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace LangLearn\Dependencies;
+namespace LangLearn\App\Http\Routing;
 
 use Exception;
-use LangLearn\AttributeClasses\RouteAttribute;
 use Reflection;
 use ReflectionAttribute;
 use ReflectionClass;

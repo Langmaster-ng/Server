@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace LangLearn\DB;
+namespace LangLearn\App\Infrastructure\DB;
 
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\{DriverManager as DriverManager, Connection as conn};
 use Doctrine\DBAL\Tools\DsnParser;
 
-class DB
+class Core
 {
-    private static ?DB $instance = null;
+    private static ?Self $instance = null;
     private ?conn $db = null;
 
     private function __construct(private readonly string $dsn)
