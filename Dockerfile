@@ -22,14 +22,14 @@ RUN docker-php-ext-install pdo_mysql mysqli opcache pgsql pdo_pgsql \
 WORKDIR /var/www/html/
 
 # Copy composer files first for better layer caching
-COPY ../composer.json ./
+COPY ./composer.json ./
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Copy application code
-COPY ../public ./public
-COPY ../src ./src
+COPY ./public ./public
+COPY ./src ./src
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
