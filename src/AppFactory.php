@@ -92,7 +92,7 @@ class AppFactory
                 "http://localhost:3000",
                 "http://127.0.0.1:5500",
                 "https://client-six-alpha-92.vercel.app/",
-                "https://langlearn.vercel.app"
+                // "https://langlearn.vercel.app"
             ]))->handle(function() {
                 return (new BodyParser(static::$request))
                     ->handle(fn () => $this->router->resolve($_SERVER["REQUEST_METHOD"], $_SERVER["REQUEST_URI"]));
