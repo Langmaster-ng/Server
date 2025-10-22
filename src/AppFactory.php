@@ -9,6 +9,7 @@ use Doctrine\DBAL\Connection;
 use Exception;
 use LangLearn\App\Http\Contract\RequestContext;
 use LangLearn\App\Http\Controllers\Authentication;
+use LangLearn\App\Http\Controllers\Waitlist;
 use LangLearn\App\Http\Middleware\BodyParser;
 use LangLearn\App\Http\Middleware\Cors;
 use LangLearn\App\Http\Middleware\TrustProxies;
@@ -95,7 +96,7 @@ class AppFactory
                 "https://www.thelangmaster.com"
             ]))->handle(function() {
                 return (new BodyParser(static::$request))
-                    ->handle(fn () => $this->router->resolve($_SERVER["REQUEST_METHOD"], $_SERVER["REQUEST_URI"]));
+                    ->handle(fn () => $this->router->resolve($_SERVER["REQUEST_METHOD"], parse_url($_SERVER["REQUEST_URI"] ?? "/", PHP_URL_PATH)));
             });
 
         } catch (Exception $th) {
@@ -144,6 +145,7 @@ class AppFactory
         })
 
             // -------------------------------------- CONTROLLER ROUTES ------------------------------------------------------
-            ->registerAttributeRoute(Authentication::class);
+            ->registerAttributeRoute(Authentication::class)
+            ->registerAttributeRoute(Waitlist::class);
     }
 }

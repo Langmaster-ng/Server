@@ -144,45 +144,4 @@ class Authentication
             ];
         }
     }
-
-    #[RouteAttribute('/v1/api/waitlist', 'POST')]
-    public function addToWaitlist(): array
-    {
-        if (!Index::isNotEmptyValInArray(AppFactory::getRequest()->getBody(), ["email"])) {
-            throw new Exception("Missing required fields, email");
-        }
-
-        extract(AppFactory::getRequest()->getBody());
-
-        if (!preg_match(EMAIL_REGEX, $email)) throw new Exception("Invalid Credentials");
-
-        $qry = AppFactory::getDBConection()->prepare("INSERT INTO waitlist (email) VALUES (:email)");
-
-        $qry->bindValue(":email", (string) $email, ParameterType::STRING);
-
-        try {
-            $result = $qry->executeStatement();
-
-            if ($result <= 0) {
-                throw new Exception("Unable to add email to waitlist");
-            };
-
-            return [
-                "status"=> "success",
-                "message"=> (string) $email . " added to waitlist successfully"
-            ];
-        } catch (UniqueConstraintViolationException $e) {
-            return [
-                "status"=> "error",
-                "message"=> "Email already in waitlist",
-                "code" => 409
-            ];
-        } catch (DBALException $e) {
-            // Generic Doctrine DBAL errors (SQL syntax, connection, etc.)
-            return [
-                "status" => "error",
-                "message" => "Database error: " . $e->getMessage(),
-            ];
-        }
-    }
 }
