@@ -10,6 +10,8 @@ use LangLearn\App\Http\Routing\RouteAttribute;
 use LangLearn\AppFactory;
 use LangLearn\Support\Helpers\Index;
 use Doctrine\DBAL\Exception as DBALException;
+use Resend;
+use function LangLearn\Support\getEmailClient;
 
 class Waitlist {
     #[RouteAttribute('/v1/api/waitlist', 'POST')]
@@ -28,11 +30,32 @@ class Waitlist {
         $qry->bindValue(":email", (string) $email, ParameterType::STRING);
 
         try {
-            $result = $qry->executeStatement();
+            AppFactory::getDBConection()->beginTransaction();
 
-            if ($result <= 0) {
-                throw new Exception("Unable to add email to waitlist");
-            };
+                $result = $qry->executeStatement();
+
+                if ($result <= 0) {
+                    throw new Exception("Unable to add email to waitlist");
+                };
+
+                // Send welcome email after paying for a mailer service plan
+                // Resend::client($_ENV['RESEND_API_KEY'])->emails->send([
+                //     'from' => 'LangMaster <onboarding@resend.dev>',
+                //     'to' => [$email],
+                //     'subject' => 'Approved to LangMaster Waitlist',
+                //     'html' => 'Hi ' . htmlspecialchars($email) . ',<br><br>'
+                //         . 'Congratulations! You have been approved to join the LangMaster waitlist. We are excited to have you on board and look forward to providing you with an exceptional language learning experience.<br><br>'
+                //         . 'Stay tuned for updates and further instructions as we prepare to launch our platform.<br><br>'
+                //         . 'Best regards,<br>'
+                //         . 'The LangMaster Team',
+                //     'text' => 'Hi ' . $email . ',\n\n'
+                //         . 'Congratulations! You have been approved to join the LangMaster waitlist. We are excited to have you on board and look forward to providing you with an exceptional language learning experience.\n\n'
+                //         . 'Stay tuned for updates and further instructions as we prepare to launch our platform.\n\n'
+                //         . 'Best regards,\n'
+                //         . 'The LangMaster Team',
+                // ]);
+
+            AppFactory::getDBConection()->commit();
 
             return [
                 "status"=> "success",
