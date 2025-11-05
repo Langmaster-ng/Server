@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace LangLearn\App\Http\Controllers;
+use DateTime;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\ParameterType;
 use Exception;
@@ -10,10 +11,12 @@ use LangLearn\App\Http\Routing\RouteAttribute;
 use LangLearn\AppFactory;
 use LangLearn\Support\Helpers\Index;
 use Doctrine\DBAL\Exception as DBALException;
-use Resend;
-use function LangLearn\Support\getEmailClient;
+use LangLearn\Support\MailHelper;
 
 class Waitlist {
+    private const string WAITLIST_EMAIL_SUBJECT = "You’re on the LangMaster waitlist, Igbo, Yoruba, Hausa… your journey starts soon";
+    private const string WAITLIST_WELCOME_TEMPLATE = "waitlist-welcome";
+
     #[RouteAttribute('/v1/api/waitlist', 'POST')]
     public function addToWaitlist(): array
     {
@@ -21,7 +24,7 @@ class Waitlist {
             throw new Exception("Missing required fields, email");
         }
 
-        extract(AppFactory::getRequest()->getBody());
+        $email = AppFactory::getRequest()->getBody()['email'];
 
         if (!preg_match(EMAIL_REGEX, $email)) throw new Exception("Invalid Credentials");
 
@@ -36,26 +39,21 @@ class Waitlist {
 
                 if ($result <= 0) {
                     throw new Exception("Unable to add email to waitlist");
-                };
-
-                // Send welcome email after paying for a mailer service plan
-                // Resend::client($_ENV['RESEND_API_KEY'])->emails->send([
-                //     'from' => 'LangMaster <onboarding@resend.dev>',
-                //     'to' => [$email],
-                //     'subject' => 'Approved to LangMaster Waitlist',
-                //     'html' => 'Hi ' . htmlspecialchars($email) . ',<br><br>'
-                //         . 'Congratulations! You have been approved to join the LangMaster waitlist. We are excited to have you on board and look forward to providing you with an exceptional language learning experience.<br><br>'
-                //         . 'Stay tuned for updates and further instructions as we prepare to launch our platform.<br><br>'
-                //         . 'Best regards,<br>'
-                //         . 'The LangMaster Team',
-                //     'text' => 'Hi ' . $email . ',\n\n'
-                //         . 'Congratulations! You have been approved to join the LangMaster waitlist. We are excited to have you on board and look forward to providing you with an exceptional language learning experience.\n\n'
-                //         . 'Stay tuned for updates and further instructions as we prepare to launch our platform.\n\n'
-                //         . 'Best regards,\n'
-                //         . 'The LangMaster Team',
-                // ]);
+                }
 
             AppFactory::getDBConection()->commit();
+
+            // Send welcome email after paying for a mailer service plan
+            MailHelper::getEmailClient()->send(
+                $email, 
+                self::WAITLIST_WELCOME_TEMPLATE, 
+                [
+                    "email" => $email,
+                    "waitlist_url" => BASE_URL . "/waitlist",
+                    "year" => (new DateTime())->format("Y"),
+                ],
+                self::WAITLIST_EMAIL_SUBJECT
+            ); // Add the variables
 
             return [
                 "status"=> "success",
@@ -88,7 +86,7 @@ class Waitlist {
         $qry = AppFactory::getDBConection()->prepare("
             SELECT email, created_at, status, source
             FROM waitlist
-            ORDER BY created_at DESC, id DESC
+            ORDER BY created_at DESC
             OFFSET :offset 
             LIMIT :limit
         ");
@@ -110,7 +108,7 @@ class Waitlist {
         return [
             "status" => "success",
             "message" => "Waitlist fetched successfully",
-            "data" => array_slice($waitlist, 0, $size - 1), // return only the requested size
+            "data" => array_slice($waitlist, 0, $size), // return only the requested size
             "hasNext" => count($waitlist) === $fetchLimit,
             "totalCount" => $totalCount
         ];

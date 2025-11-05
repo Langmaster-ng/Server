@@ -1,23 +1,36 @@
-Subject: You’re on the LangMaster waitlist, Igbo, Yoruba, Hausa… your journey starts soon
+<header>
+    <h3>Welcome to the LangMaster Waitlist!</h3>
+    <h4>Hi <strong>{{email}}</strong>,</h4>
+</header>
 
-Hi {{email}},
+<p>Thanks for joining LangMaster — Nigeria’s homegrown AI platform for learning indigenous languages.</p>
 
-Thanks for joining LangMaster — Nigeria’s homegrown AI platform for learning indigenous languages.
+<div>
+    <h5>What happens next:</h5>
+    <ul>
+        <li>We’ll email you before launch (no spam).</li>
+        <li>Expect an invite to our community: Village Square.</li>
+    </ul>
 
-What happens next:
-• We’ll email you before launch (no spam).
-• Expect an invite to our community: Village Square.
+    <p>Visit the Village Square: <a href="{{village_square_url}}">{{village_square_url}}</a></p>
+</div>
 
-Visit the Village Square: {{community_url}}
+<div>
+    <h5>Help us grow the movement 🌱</h5>
+    <p>Invite 3 friends and unlock early access perks:</p>
+    <ul>
+        <li>Share on WhatsApp: <a href="https://wa.me/?text={{url_encoded_share_text}}">https://wa.me/?text={{url_encoded_share_text}}</a></li>
+        <li>Share on X (Twitter): <a href="https://twitter.com/intent/tweet?text={{url_encoded_share_text}}">https://twitter.com/intent/tweet?text={{url_encoded_share_text}}</a></li>
+    </ul>
 
-Help us grow the movement 🌱  
-Invite 3 friends and unlock early access perks:
-• Share on WhatsApp: https://wa.me/?text={{url_encoded_share_text}}
-• Share on X (Twitter): https://twitter.com/intent/tweet?text={{url_encoded_share_text}}
+    <p>Tip: Your share text can be:</p>
+    <blockquote>
+        “I just joined the LangMaster waitlist — AI-powered Igbo, Yoruba, Hausa learning with real culture. Jump in here: {{waitlist_url}}"
+    </blockquote>
+</div>
 
-Tip: Your share text can be:
-“I just joined the LangMaster waitlist — AI-powered Igbo, Yoruba, Hausa learning with real culture. Jump in here: {{waitlist_url}}"
-
-Cheers,
-LangMaster • Rivers State, Nigeria • © {{year}}
-Unsubscribe: {{unsubscribe_url}}
+<footer>
+    <p>Cheers, <br/> LangMaster • Rivers State, Nigeria</p>
+    <p>© {{year}} LangMaster. All rights reserved.</p>
+    <p><a href="{{waitlist_url}}/unsubscribe?email={{email}}">Unsubscribe</a></p>
+</footer>

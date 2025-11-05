@@ -9,3 +9,4 @@ define('PASSWORD_REGEX', "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-
 define('PERMITTED_LANGUAGES', ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'zh', 'ja']);
 define('PROFICIENCY_LEVELS', ['beginner', 'intermediate', 'advanced']);
 define('TESTING_BRANCH', "");
+define('BASE_URL', $_ENV["APP_ENV"] == "production" ? $_ENV["PROD_FRONTEND_URL"] : $_ENV["DEV_FRONTEND_URL"]);
