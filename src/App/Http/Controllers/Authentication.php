@@ -144,4 +144,94 @@ class Authentication
             ];
         }
     }
+
+    #[RouteAttribute('/v1/api/admin/login', 'POST')]
+    public function adminLoginFunction(): array
+    {
+        $body = AppFactory::getRequest()->getBody();
+
+        if (!Index::isNotEmptyValInArray($body, ['email', 'password'])) {
+            return [
+                "status"=> "error",
+                "message"=> "Missing required fields: email or password",
+                "code" => 400,
+            ];
+        }
+
+        $qry = AppFactory::getDBConection()->prepare("SELECT * FROM admins WHERE email = :email ORDER BY created_at DESC LIMIT 1");
+        $qry->bindValue(":email", $body['email'], ParameterType::STRING);
+
+        $result = $qry->executeQuery();
+
+        if ($result->rowCount() === 0) {
+            return [
+                "status"=> "error",
+                "message"=> "Invalid email or password",
+                "code" => 401
+            ];
+        }
+
+        $admin = $result->fetchAllAssociative()[0];
+        if (!password_verify($body['password'], $admin['password'])) {
+            return [
+                "status"=> "error",
+                "message"=> "Invalid email or password",
+                "code" => 401
+            ];
+        }
+
+        return [
+            "status" => "success",
+            "message" => "Admin Logged In Successfully",
+            "jwt" => Index::generateJwt(["email" => $admin], $_ENV["JWT_SECRET"], (3600 * 12)),
+            "code" => 200
+        ];
+    }
+
+    #[RouteAttribute("/v1/api/admin/add-admin","POST")]
+    public function adminSignupFunction(): array {
+        // This is a protected function. Only super admins can create new admin accounts.
+        // Implementation of authentication check is assumed to be handled elsewhere.
+
+        // For now, we return a simple success message.
+        // In a real implementation, you would add logic to create a new admin account here.
+        $body = AppFactory::getRequest()->getBody();
+
+        if (!Index::isNotEmptyValInArray($body, ["email", "password", "full_name", "super_admin_token"])) {
+            return [
+                "status"=> "error",
+                "message"=> "Missing required fields: email, password, full_name, or super_admin_token",
+                "code" => 400
+            ];
+        }
+
+        if ($body['super_admin_token'] !== $_ENV['SUPER_ADMIN_TOKEN']) {
+            return [
+                "status"=> "error",
+                "message"=> "Unauthorized: Invalid super admin token",
+                "code" => 403,
+            ];
+        }
+
+        $qry = AppFactory::getDBConection()->prepare("INSERT INTO admins (email, password, full_name) VALUES (:email, :password, :full_name)");
+        $qry->bindValue(":email", $body['email'], ParameterType::STRING);
+        $qry->bindValue(":password", password_hash($body['password'], PASSWORD_DEFAULT), ParameterType::STRING);
+        $qry->bindValue(":full_name", $body['full_name'], ParameterType::STRING);
+
+        $result = $qry->executeStatement();
+
+        if ($result <= 0) {
+            return [
+                "status"=> "error",
+                "message"=> "Unable to create admin account",
+                "code" => 500,
+            ];
+        }
+
+        return [
+            "status" => "success",
+            "message" => "Admin account created successfully",
+            "code"=> 200
+        ];
+    }
 }
